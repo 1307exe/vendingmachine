@@ -148,7 +148,7 @@ public class DispenserTest {
         assertNull(troco); // não há moedas ou notas suficientes para R$ 2
     }
 
-    //testando para ver se passa
+    // UNOFFICIAL RANDOM TEST -> just testing
     @Test
     public void desafioTeste() {
         dispenser.zerarEstoque();
@@ -156,6 +156,45 @@ public class DispenserTest {
         dispenser.definirEstoque(NotaDeDoisReais.class, 2);
         Dinheiro[] troco = dispenser.trocoPara(15.00, 9.00); // troco de R$ 6
         assertNull(troco); // não há moedas ou notas suficientes para R$ 6
+    }
+
+
+    // 6. Parte do desafio - deve retornar troco correto
+    @Test
+    public void deveRetornarOTrocoExatoCenario3(){
+        dispenser.zerarEstoque();
+        dispenser.definirEstoque(NotaDeDoisReais.class, 4);
+        dispenser.definirEstoque(MoedaDeCinquentaCentavos.class, 3);
+        dispenser.definirEstoque(MoedaDeVinteECincoCentavos.class, 1);
+        dispenser.definirEstoque(MoedaDeDezCentavos.class,3);
+
+        Dinheiro[] troco = dispenser.trocoPara(20.00, 14.20);
+        assertEquals(2.0, troco[0].valor(),0);
+        assertEquals(2.0, troco[1].valor(),0);
+        assertEquals(0.5, troco[2].valor(),0);
+        assertEquals(0.5, troco[3].valor(),0);
+        assertEquals(0.5, troco[4].valor(),0);
+        assertEquals(0.1, troco[5].valor(),0);
+        assertEquals(0.1, troco[5].valor(),0);
+        assertEquals(0.1, troco[6].valor(),0);
+    }
+
+    // 7. Parte do desafio - troco
+    @Test
+    public void deveRetornarOTrocoExatoCenario4(){
+        dispenser.zerarEstoque();
+        dispenser.definirEstoque(NotaDeCincoReais.class,1);
+        dispenser.definirEstoque(NotaDeDoisReais.class, 3);
+        dispenser.definirEstoque(MoedaDeVinteECincoCentavos.class, 1);
+        dispenser.definirEstoque(MoedaDeDezCentavos.class,4);
+
+        Dinheiro[] troco = dispenser.trocoPara(10.0, 3.70);
+        assertEquals(2.0, troco[0].valor(),0);
+        assertEquals(2.0, troco[1].valor(),0);
+        assertEquals(2.0, troco[2].valor(),0);
+        assertEquals(0.1, troco[3].valor(),0);
+        assertEquals(0.1, troco[4].valor(),0);
+        assertEquals(0.1, troco[5].valor(),0);
     }
 
 }
