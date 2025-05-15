@@ -139,7 +139,7 @@ public class DispenserTest {
         assertEquals(36.60, total, 0.0001);
     }
 
-    // 5. Estoque limitado – troco deve falhar por falta de moedas suficientes
+    // 5. Estoque limitado – troco deve falhar por falta de moedas suficientes // TODO
     @Test
     public void deveRetornarNullQuandoEstoqueInsuficiente() {
         dispenser.zerarEstoque();
@@ -148,18 +148,25 @@ public class DispenserTest {
         assertNull(troco); // não há moedas ou notas suficientes para R$ 2
     }
 
-    // UNOFFICIAL RANDOM TEST -> just testing
+    // 8. Teste do desafio - Enviado pelo Sol // TODO
     @Test
-    public void desafioTeste() {
+    public void deveRetorar6630(){
         dispenser.zerarEstoque();
+        dispenser.definirEstoque(NotaDeCinquentaReais.class, 1);
+        dispenser.definirEstoque(NotaDeVinteReais.class, 3);
         dispenser.definirEstoque(NotaDeCincoReais.class, 1);
-        dispenser.definirEstoque(NotaDeDoisReais.class, 2);
-        Dinheiro[] troco = dispenser.trocoPara(15.00, 9.00); // troco de R$ 6
-        assertNull(troco); // não há moedas ou notas suficientes para R$ 6
+        dispenser.definirEstoque(NotaDeDoisReais.class, 3);
+        dispenser.definirEstoque(MoedaDeVinteECincoCentavos.class, 1);
+        dispenser.definirEstoque(MoedaDeDezCentavos.class, 3);
+
+        Dinheiro[] troco = dispenser.trocoPara(86.30, 20.00);
+        double total = 0.0;
+        for (Dinheiro d : troco) total += d.valor();
+        assertEquals(66.3, total, 0.0001);
     }
 
 
-    // 6. Parte do desafio - deve retornar troco correto
+    //  (TESTE ENVIADO PELA NANDA - 01)
     @Test
     public void deveRetornarOTrocoExatoCenario3(){
         dispenser.zerarEstoque();
@@ -179,7 +186,7 @@ public class DispenserTest {
         assertEquals(0.1, troco[6].valor(),0);
     }
 
-    // 7. Parte do desafio - troco
+    // (TESTE ENVIADO PELA NANDA - 02)
     @Test
     public void deveRetornarOTrocoExatoCenario4(){
         dispenser.zerarEstoque();

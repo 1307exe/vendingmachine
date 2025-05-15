@@ -2,6 +2,7 @@ package models.dinheiro;
 
 import java.util.Arrays;
 
+// ALTEREI MAIS A CLASSE DO 'TROCOPARA'
 public class Dispenser {
 
     // Inventário inicial – uma instância de cada denominação
@@ -63,6 +64,8 @@ public class Dispenser {
      * Retorna um array vazio se não houver troco e {@code null} caso o estoque
      * não permita montar o valor necessário.
      */
+    // NOTA: ALTEREI O ALGORITMO PARA QUE ELE NÃO SEJA MAIS GREEDY, PORQUE NÃO ENCONTREI SOLUÇÃO COM ELE GREEDY
+
     public Dinheiro[] trocoPara(double valorPago, double valorProduto) {
         double troco = valorPago - valorProduto;
 
@@ -88,58 +91,80 @@ public class Dispenser {
             }
         }
 
+        // MUDEI UM POUCO PARA FICAR MAIS CLARO
         Dinheiro[] usados = new Dinheiro[100];
-        int usadosIndex = 0;
+        int[] quantidadesUsadas = new int[ordenado.length];
 
-    // TENTATIVA DO DESAFIO ABAIXO:
-        for (int i = 0; i < ordenado.length; i++) {
-            Dinheiro dinheiro = ordenado[i];
-            int disponiveis = dinheiro.getQuantidade();
-            if (disponiveis == 0) continue;
+        // ABAIXO FOI ONDE MAIS MUDEI + TENTATIVA DO DESAFIO
 
-            while (troco + 1e-6 >= dinheiro.valor() && disponiveis > 0) {
-                if (usadosIndex == usados.length) {
-                    return null;
-                }
-
-                troco = (double) Math.round((troco - dinheiro.valor()) * 100.0) / 100;
-                usados[usadosIndex++] = novaInstancia(dinheiro);
-                disponiveis--;
-
-                if (troco == 0.0) {
-                    for (int j = 0; j < usadosIndex; j++) {
-                        Class<? extends Dinheiro> tipo = usados[j].getClass();
-                        decrementarEstoque(tipo, 1);
-                    }
-                    return Arrays.copyOf(usados, usadosIndex);
+        // NOVA FUNÇÃO (DIVIDI EM DOIS PASSOS)
+        if (encontrarTroco(ordenado, troco, 0, usados, 0, quantidadesUsadas)) {
+            for (int i = 0; i < ordenado.length; i++) {
+                if (quantidadesUsadas[i] > 0) {
+                    decrementarEstoque(ordenado[i].getClass(), quantidadesUsadas[i]);
                 }
             }
+            int totalUsado = 0;
 
-//
-//
-//            ABAIXO É O CÓDIGO ANTIGO PRA EU NÃO PERDER A CABEÇA \/\/\/\/\/\/
-//
-//            Só considera denominações cujo estoque original tenha ao menos 1 unidade
-//            if (dinheiro.getQuantidade() == 0) {
-//                continue;
-//            }
-//            while (troco + 1e-6 >= dinheiro.valor()) {
-//                // Checagem para não estourar o array fixo
-//                if (usadosIndex == usados.length) {
-//                    return null; // Falha: precisaríamos de mais itens que o limite didático permite
-//                }
-//                troco = (double) Math.round((troco - dinheiro.valor()) * 100.0) / 100;
-//
-//                usados[usadosIndex++] = novaInstancia(dinheiro);
-//                if (troco == 0.0) {
-//                    return Arrays.copyOf(usados, usadosIndex);
-//                }
-//            }
+            // "LOOP INTELIGENTE", BASICAMENTE SUBSTITUI 'I = 0; I < X; I++' ETC
+            for (int q : quantidadesUsadas) {
+                totalUsado += q;
+            }
 
+            return Arrays.copyOf(usados, totalUsado);
         }
 
-        // Não foi possível compor exatamente o valor do troco
         return null;
+    }
+
+    // PRIVATE BOOLEAN PORQUE SÓ QUERO QUE CHAME NA PRÓPRIA CLASSE ATÉ FALHAR OU DAR CERTO
+    private boolean encontrarTroco(Dinheiro[] ordenado, double trocoRestante,
+                                   int indice, Dinheiro[] usados, int usadosIndex,
+                                   int[] quantidadesUsadas) {
+
+        // NÃO TEM NECESSIDADE DE CONTINUAR PORQUE O TROCO JÁ DEU CERTO
+        if (Math.abs(trocoRestante) < 1e-6) {
+            return true;
+        }
+
+        // POR PRECAUÇÃO, CASO O TROCO DÊ NEGATIVO
+        if (indice >= ordenado.length || trocoRestante < -1e-6) {
+            return false;
+        }
+
+        // AQUI TÁ PEGANDO A MOEDA DE ANÁLISE E COMPARANDO COM A MOEDA QUE TEM NO ÍNDICE QUE FOI ORDENADO JÁ POR BUBBLE-SORT
+        Dinheiro moedaAtual = ordenado[indice];
+        // REDUZ AS MOEDAS QUE ESTÃO SENDO USADAS AGORA DO ÍNDICE
+        int disponivel = moedaAtual.getQuantidade() - quantidadesUsadas[indice];
+        // TENTA USAR O MÁXIMO POSSÍVEL DE MOEDAS
+        int maxUso = Math.min(disponivel, (int)(trocoRestante / moedaAtual.valor() + 1e-6));
+
+        // Coloca as moedas usadas como se fosse num "saco" pra dar o troco, usa até zerar as moedas que tem
+        for (int usar = maxUso; usar >= 0; usar--) {
+            if (usar > 0) {
+                for (int i = 0; i < usar; i++) {
+                    usados[usadosIndex + i] = novaInstancia(moedaAtual);
+                }
+                quantidadesUsadas[indice] += usar;
+            }
+
+            // CALCULA O QUE AINDA FALTA PARA USAR
+            double novoTroco = trocoRestante - (usar * moedaAtual.valor());
+            novoTroco = (double) Math.round(novoTroco * 100.0) / 100.0;
+
+            // AQUI É ONDE TÁ A RECURSION
+            // FICA SE CHAMANDO DE NOVO PARA TENTAR O IDEAL, SE FALHAR DÁ BACKTRACKING
+            if (encontrarTroco(ordenado, novoTroco, indice + 1, usados,
+                    usadosIndex + usar, quantidadesUsadas)) {
+                return true;
+            }
+
+            if (usar > 0) {
+                quantidadesUsadas[indice] -= usar;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -172,6 +197,6 @@ public class Dispenser {
             estoque[i].setQuantidade(0);
         }
     }
-    
+
 }
 
